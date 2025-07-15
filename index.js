@@ -310,6 +310,14 @@ app.delete("/donation-requests/:id", async (req, res) => {
   }
 });
 
+//Check admin or not
+app.get("/users/admin/:email", async (req, res) => {
+  const email = req.params.email;
+  const user = await Users.findOne({ email });
+
+  res.send({ isAdmin: user?.role === "admin" });
+});
+
 
   } catch (error) {
     console.error(" MongoDB connection failed:", error);
