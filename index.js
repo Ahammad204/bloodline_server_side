@@ -256,6 +256,18 @@ app.get("/users", async (req, res) => {
   res.send(requests);
 });
 
+//Update user 
+app.patch("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+  const result = await Users.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updatedData }
+  );
+  res.send(result);
+});
+
+
 // GET single donation request by ID
 app.get("/donation-requests/:id", async (req, res) => {
   const { id } = req.params;
