@@ -245,6 +245,12 @@ app.post("/donation-requests", async (req, res) => {
     res.status(500).json({ message: "Failed to create donation request" });
   }
 });
+// Get all donation requests
+app.get("/donation-requests", async (req, res) => {
+  const requests = await DonationRequests.find().sort({ createdAt: -1 }).toArray();
+  res.send(requests);
+});
+
 
   } catch (error) {
     console.error(" MongoDB connection failed:", error);
