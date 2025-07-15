@@ -479,6 +479,20 @@ app.get("/funds", async (req, res) => {
   res.send({ total, funds });
 });
 
+// Total Fund Aggregation
+app.get("/funds/total", async (req, res) => {
+  try {
+    const total = await Funds.aggregate([
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } }
+    ]).toArray();
+
+    const totalAmount = total[0]?.totalAmount || 0;
+    res.send({ totalAmount });
+  } catch (error) {
+    res.status(500).send({ message: "Failed to calculate total funding", error });
+  }
+});
+
 
 
   } catch (error) {
