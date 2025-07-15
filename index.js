@@ -251,6 +251,49 @@ app.get("/donation-requests", async (req, res) => {
   res.send(requests);
 });
 
+// GET single donation request by ID
+app.get("/donation-requests/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const request = await DonationRequests.findOne({ _id: new ObjectId(id) });
+
+    if (!request) {
+      return res.status(404).json({ message: "Donation request not found" });
+    }
+
+    res.status(200).json(request);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch donation request", error: error.message });
+  }
+});
+
+
+// PATCH donation request by ID
+app.patch("/donation-requests/:id", async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+
+
+
+  try {
+    delete updateData._id; 
+    const result = await DonationRequests.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "Donation request not found" });
+    }
+
+    res.status(200).json({ message: "Donation request updated", result });
+  } catch (err) {
+    res.status(500).json({ message: "Update failed", error: err.message });
+  }
+});
+
+
 
   } catch (error) {
     console.error(" MongoDB connection failed:", error);
