@@ -357,6 +357,62 @@ app.post("/blogs", async (req, res) => {
   }
 });
 
+// GET: Fetch all blogs
+app.get("/blogs", async (req, res) => {
+  try {
+    const blogs = await Blogs.find().sort({ createdAt: -1 }).toArray();
+    res.status(200).json(blogs);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch blogs", error: err.message });
+  }
+});
+
+// GET: Get single blog by ID
+app.get("/blogs/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const blog = await Blogs.findOne({ _id: new ObjectId(id) });
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
+    res.status(200).json(blog);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch blog", error: err.message });
+  }
+});
+
+// PATCH: Update blog status (publish/unpublish) or edit content
+app.patch("/blogs/:id", async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  try {
+    delete updateData._id;
+    const result = await Blogs.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    res.status(200).json({ message: "Blog updated successfully", result });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update blog", error: err.message });
+  }
+});
+
+// DELETE: Delete blog by ID
+app.delete("/blogs/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await Blogs.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    res.status(200).json({ message: "Blog deleted successfully", result });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete blog", error: err.message });
+  }
+});
+
+
 
 //Check admin or not
 app.get("/users/admin/:email", async (req, res) => {
