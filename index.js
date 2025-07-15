@@ -44,6 +44,8 @@ async function run() {
     const Unions = client.db("GeocodeDB").collection("Unions");
     const Users = client.db("UsersDB").collection("Users");
     const DonationRequests = client.db("DonationDB").collection("Donations");
+    const Blogs = client.db("BlogDB").collection("Blogs");
+
 
 
     app.get("/geocode/divisions", async (req, res) => {
@@ -326,6 +328,35 @@ app.delete("/donation-requests/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to delete donation request", error: error.message });
   }
 });
+
+// POST: Create a new blog
+app.post("/blogs", async (req, res) => {
+  try {
+    const { title, thumbnail, content } = req.body;
+
+    if (!title || !thumbnail || !content) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const newBlog = {
+      title,
+      thumbnail,
+      content,
+      status: "draft", 
+      createdAt: new Date(),
+    };
+
+    const result = await Blogs.insertOne(newBlog);
+    res.status(201).json({
+      message: "Blog created successfully",
+      blogId: result.insertedId,
+    });
+  } catch (err) {
+    console.error("Blog creation error:", err);
+    res.status(500).json({ message: "Failed to create blog", error: err.message });
+  }
+});
+
 
 //Check admin or not
 app.get("/users/admin/:email", async (req, res) => {
