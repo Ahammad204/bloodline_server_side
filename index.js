@@ -250,6 +250,11 @@ app.get("/donation-requests", async (req, res) => {
   const requests = await DonationRequests.find().sort({ createdAt: -1 }).toArray();
   res.send(requests);
 });
+// Get all Users
+app.get("/users", async (req, res) => {
+  const requests = await Users.find().sort({ createdAt: -1 }).toArray();
+  res.send(requests);
+});
 
 // GET single donation request by ID
 app.get("/donation-requests/:id", async (req, res) => {
