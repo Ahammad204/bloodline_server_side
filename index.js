@@ -422,6 +422,14 @@ app.get("/users/admin/:email", async (req, res) => {
   res.send({ isAdmin: user?.role === "admin" });
 });
 
+//Check Volunteer or not
+app.get("/users/volunteer/:email", async (req, res) => {
+  const email = req.params.email;
+  const user = await Users.findOne({ email });
+
+  res.send({ isVolunteer: user?.role === "volunteer" });
+});
+
 
   } catch (error) {
     console.error(" MongoDB connection failed:", error);
