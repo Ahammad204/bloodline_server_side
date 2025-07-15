@@ -9,7 +9,7 @@ const jwt = require("jsonwebtoken");
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5173", 
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -21,7 +21,7 @@ app.use(cookieParser());
 const port = process.env.PORT || 5000;
 
 // MongoDB Setup
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.URI;
 
 const client = new MongoClient(uri, {
@@ -43,6 +43,8 @@ async function run() {
     const Upazilas = client.db("GeocodeDB").collection("Upazilas");
     const Unions = client.db("GeocodeDB").collection("Unions");
     const Users = client.db("UsersDB").collection("Users");
+    const DonationRequests = client.db("DonationDB").collection("Donations");
+
 
     app.get("/geocode/divisions", async (req, res) => {
       const divisions = await Divisions.find().toArray();
@@ -172,6 +174,78 @@ async function run() {
         res.status(401).json({ message: "Unauthorized", error: err.message });
       }
     });
+    // PATCH /users/:id
+    app.patch("/users/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedData = req.body;
+      const result = await Users.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedData }
+      );
+      res.send(result);
+    });
+
+    // Create Donation Request
+app.post("/donation-requests", async (req, res) => {
+  try {
+    const {
+      requesterName,
+      requesterEmail,
+      recipientName,
+      district,
+      upazila,
+      hospitalName,
+      address,
+      bloodGroup,
+      donationDate,
+      donationTime,
+      requestMessage,
+    } = req.body;
+
+    if (
+      !requesterName ||
+      !requesterEmail ||
+      !recipientName ||
+      !district ||
+      !upazila ||
+      !hospitalName ||
+      !address ||
+      !bloodGroup ||
+      !donationDate ||
+      !donationTime ||
+      !requestMessage
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const newRequest = {
+      requesterName,
+      requesterEmail,
+      recipientName,
+      district,
+      upazila,
+      hospitalName,
+      address,
+      bloodGroup,
+      donationDate,
+      donationTime,
+      requestMessage,
+      status: "pending",
+      createdAt: new Date(),
+    };
+
+    const result = await DonationRequests.insertOne(newRequest);
+
+    res.status(201).json({
+      message: "Donation request created successfully",
+      requestId: result.insertedId,
+    });
+  } catch (err) {
+    console.error("Donation Request Error:", err);
+    res.status(500).json({ message: "Failed to create donation request" });
+  }
+});
+
   } catch (error) {
     console.error(" MongoDB connection failed:", error);
   }
