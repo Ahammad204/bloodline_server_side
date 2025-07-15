@@ -33,6 +33,32 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized: No token" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; 
+    next();
+  } catch (err) {
+    res.status(403).json({ message: "Forbidden: Invalid token" });
+  }
+};
+
+const verifyAdmin = async (req, res, next) => {
+  const email = req.user?.email;
+  const user = await Users.findOne({ email });
+  if (user?.role !== "admin") {
+    return res.status(403).json({ message: "Forbidden: Admins only" });
+  }
+  next();
+};
+
+
 async function run() {
   try {
     await client.connect();
@@ -249,18 +275,18 @@ app.post("/donation-requests", async (req, res) => {
   }
 });
 // Get all donation requests
-app.get("/donation-requests", async (req, res) => {
+app.get("/donation-requests",verifyToken, async (req, res) => {
   const requests = await DonationRequests.find().sort({ createdAt: -1 }).toArray();
   res.send(requests);
 });
 // Get all Users
-app.get("/users", async (req, res) => {
+app.get("/users",verifyToken,verifyAdmin, async (req, res) => {
   const requests = await Users.find().sort({ createdAt: -1 }).toArray();
   res.send(requests);
 });
 
 //Update user 
-app.patch("/users/:id", async (req, res) => {
+app.patch("/users/:id",verifyToken,verifyAdmin, async (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;
   const result = await Users.updateOne(
@@ -416,7 +442,7 @@ app.delete("/blogs/:id", async (req, res) => {
 
 
 //Check admin or not
-app.get("/users/admin/:email", async (req, res) => {
+app.get("/users/admin/:email",verifyToken,verifyAdmin, async (req, res) => {
   const email = req.params.email;
   const user = await Users.findOne({ email });
 
@@ -465,7 +491,7 @@ app.post("/funds", async (req, res) => {
 });
 
 // GET: All Funds
-app.get("/funds", async (req, res) => {
+app.get("/funds",verifyToken, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
 
