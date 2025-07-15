@@ -293,6 +293,22 @@ app.patch("/donation-requests/:id", async (req, res) => {
   }
 });
 
+// DELETE donation request by ID
+app.delete("/donation-requests/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await DonationRequests.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Donation request not found" });
+    }
+
+    res.status(200).json({ message: "Donation request deleted", result });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete donation request", error: error.message });
+  }
+});
 
 
   } catch (error) {
