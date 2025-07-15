@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Middleware
 app.use(
@@ -45,7 +46,7 @@ async function run() {
     const Users = client.db("UsersDB").collection("Users");
     const DonationRequests = client.db("DonationDB").collection("Donations");
     const Blogs = client.db("BlogDB").collection("Blogs");
-
+    const Funds = client.db("FundDB").collection("Funds");
 
 
     app.get("/geocode/divisions", async (req, res) => {
@@ -429,6 +430,55 @@ app.get("/users/volunteer/:email", async (req, res) => {
 
   res.send({ isVolunteer: user?.role === "volunteer" });
 });
+
+// POST: Create Payment Intent
+app.post("/create-payment-intent", async (req, res) => {
+  const { amount } = req.body;
+
+  if (!amount) return res.status(400).send({ message: "Amount required" });
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Stripe uses cents
+      currency: "usd",
+      payment_method_types: ["card"],
+    });
+
+    res.send({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    res.status(500).send({ message: "Payment intent creation failed", error });
+  }
+});
+
+// POST: Save Fund Info
+app.post("/funds", async (req, res) => {
+  try {
+    const fund = {
+      ...req.body,
+      createdAt: new Date(),
+    };
+    const result = await Funds.insertOne(fund);
+    res.status(201).send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Failed to save fund", error });
+  }
+});
+
+// GET: All Funds
+app.get("/funds", async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const total = await Funds.estimatedDocumentCount();
+  const funds = await Funds.find()
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .toArray();
+
+  res.send({ total, funds });
+});
+
 
 
   } catch (error) {
