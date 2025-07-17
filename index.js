@@ -11,7 +11,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 app.use(
   cors({
     // origin: "http://localhost:5173",
-    origin: "https://bloodlines.netlify.app",
+    origin: "https://bloodlines.netlify.app" || "https://bloodline-client-side.vercel.app",
     credentials: true,
   })
 );
